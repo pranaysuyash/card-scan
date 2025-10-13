@@ -1,10 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../config/app_config.dart';
 import '../../models/contact.dart';
 import '../../providers/contact_provider.dart';
-import '../../config/app_config.dart';
 import '../widgets/confidence_chip.dart';
+import '../widgets/glass_container.dart';
+import '../theme_constants.dart';
 
 class ReviewScreen extends ConsumerStatefulWidget {
   final String? imagePath;
@@ -22,7 +27,8 @@ class ReviewScreen extends ConsumerStatefulWidget {
   ConsumerState<ReviewScreen> createState() => _ReviewScreenState();
 }
 
-class _ReviewScreenState extends ConsumerState<ReviewScreen> {
+class _ReviewScreenState extends ConsumerState<ReviewScreen>
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _fullNameController;
   late TextEditingController _titleController;
@@ -35,6 +41,13 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   bool _isSaving = false;
   String? _error;
   final Map<String, double> _confidence = {};
+  late final Map<String, String> _suggestions;
+
+  late final PageController _pageController;
+  int _currentPage = 0;
+
+  late final AnimationController _saveSuccessController;
+  late final Animation<double> _saveScaleAnimation;
 
   @override
   void initState() {
@@ -59,6 +72,16 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     _websiteController = TextEditingController(text: parsed['website'] ?? '');
     _addressController = TextEditingController(text: parsed['address'] ?? '');
 
+    _suggestions = {
+      'full_name': parsed['full_name'] ?? '',
+      'title': parsed['title'] ?? '',
+      'company': parsed['company'] ?? '',
+      'email': _emailController.text,
+      'phone': _phoneController.text,
+      'website': parsed['website'] ?? '',
+      'address': parsed['address'] ?? '',
+    };
+
     // Extract confidence scores
     if (emails.isNotEmpty) {
       _confidence['email'] = emails[0]['confidence'] ?? 0.0;
@@ -66,6 +89,20 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     if (phones.isNotEmpty) {
       _confidence['phone'] = phones[0]['confidence'] ?? 0.0;
     }
+
+    _pageController = PageController();
+
+    _saveSuccessController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+
+    _saveScaleAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(
+        parent: _saveSuccessController,
+        curve: Curves.easeOutBack,
+      ),
+    );
   }
 
   @override
@@ -77,6 +114,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     _phoneController.dispose();
     _websiteController.dispose();
     _addressController.dispose();
+    _pageController.dispose();
+    _saveSuccessController.dispose();
     super.dispose();
   }
 
@@ -89,6 +128,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       _isSaving = true;
       _error = null;
     });
+
+    if (_saveSuccessController.isCompleted) {
+      _saveSuccessController.reset();
+    }
 
     try {
       final contact = Contact()
@@ -136,13 +179,14 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Contact saved successfully!')),
-      );
+      setState(() {
+        _isSaving = false;
+      });
 
       // Invalidate contacts provider to refresh list
       ref.invalidate(contactsProvider);
-
+      await _saveSuccessController.forward();
+      if (!mounted) return;
       context.go('/');
     } catch (e) {
       setState(() {
@@ -154,197 +198,508 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Review & Save',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-      ),
+      backgroundColor: theme.colorScheme.surface,
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            if (_error != null)
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 400),
-                builder: (context, value, child) {
-                  return Transform.scale(
-                    scale: 0.9 + (0.1 * value),
-                    child: Opacity(
-                      opacity: value,
-                      child: child,
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.errorContainer,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .error
-                            .withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _error!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 280,
+              pinned: true,
+              backgroundColor: theme.colorScheme.surface,
+              title: const Text(
+                'Review & Save',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              flexibleSpace: FlexibleSpaceBar(
+                background: _buildPreviewHeader(context),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_error != null) _buildErrorBanner(theme),
+                    _buildStepperIndicator(theme),
+                    const SizedBox(height: 20),
+                    _buildPagedContent(context),
+                    const SizedBox(height: 32),
+                    _buildNavigationControls(theme),
+                  ],
                 ),
               ),
-
-            // Full Name (required)
-            _buildTextField(
-              controller: _fullNameController,
-              label: 'Full Name *',
-              icon: Icons.person_rounded,
-              index: 0,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Name is required';
-                }
-                return null;
-              },
             ),
-
-            const SizedBox(height: 20),
-
-            // Title
-            _buildTextField(
-              controller: _titleController,
-              label: 'Title',
-              icon: Icons.work_rounded,
-              index: 1,
-            ),
-
-            const SizedBox(height: 20),
-
-            // Company
-            _buildTextField(
-              controller: _companyController,
-              label: 'Company',
-              icon: Icons.business_rounded,
-              index: 2,
-            ),
-
-            const SizedBox(height: 20),
-
-            // Email
-            _buildTextField(
-              controller: _emailController,
-              label: 'Email',
-              icon: Icons.email_rounded,
-              keyboardType: TextInputType.emailAddress,
-              confidence: _confidence['email'],
-              index: 3,
-              validator: (value) {
-                if (value != null && value.isNotEmpty) {
-                  if (!AppConstants.emailRegex.hasMatch(value)) {
-                    return 'Invalid email format';
-                  }
-                }
-                return null;
-              },
-            ),
-
-            const SizedBox(height: 20),
-
-            // Phone
-            _buildTextField(
-              controller: _phoneController,
-              label: 'Phone',
-              icon: Icons.phone_rounded,
-              keyboardType: TextInputType.phone,
-              confidence: _confidence['phone'],
-              index: 4,
-            ),
-
-            const SizedBox(height: 20),
-
-            // Website
-            _buildTextField(
-              controller: _websiteController,
-              label: 'Website',
-              icon: Icons.language_rounded,
-              keyboardType: TextInputType.url,
-              index: 5,
-            ),
-
-            const SizedBox(height: 20),
-
-            // Address
-            _buildTextField(
-              controller: _addressController,
-              label: 'Address',
-              icon: Icons.location_on_rounded,
-              maxLines: 2,
-              index: 6,
-            ),
-
-            const SizedBox(height: 32),
-
-            // Save Button with animation
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 600),
-              curve: Curves.easeOut,
-              builder: (context, value, child) {
-                return Transform.translate(
-                  offset: Offset(0, 20 * (1 - value)),
-                  child: Opacity(
-                    opacity: value,
-                    child: child,
-                  ),
-                );
-              },
-              child: FilledButton.icon(
-                onPressed: _isSaving ? null : _saveContact,
-                icon: _isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.check_circle_rounded),
-                label: Text(
-                  _isSaving ? 'Saving...' : 'Save Contact',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 16),
-                ),
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                  child: _buildSaveButton(theme),
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPreviewHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    final imagePath = widget.imagePath;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Hero(
+          tag: 'scanned-card-preview',
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: DesignTokens.backgroundGradient,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+              child: ClipRRect(
+                borderRadius:
+                    BorderRadius.circular(DesignTokens.borderRadiusExtraLarge),
+                child: Container(
+                  decoration: DesignTokens.glassDecoration(context),
+                  child: imagePath != null && imagePath.isNotEmpty
+                      ? Image.file(
+                          File(imagePath),
+                          fit: BoxFit.cover,
+                        )
+                      : _buildIllustration(theme),
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 24,
+          right: 24,
+          bottom: 36,
+          child: AnimatedOpacity(
+            opacity: 1.0,
+            duration: DesignTokens.animationDurationMedium,
+            child: GlassContainer(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
+              borderRadius:
+                  BorderRadius.circular(DesignTokens.borderRadiusLarge),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Preview your scan',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: DesignTokens.fontWeightSemiBold,
+                      color: theme.colorScheme.onSurface.withOpacity(0.85),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Icon(Icons.swipe_left_alt_rounded,
+                          color: theme.colorScheme.primary),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Swipe to edit',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIllustration(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primary.withOpacity(0.35),
+            theme.colorScheme.secondary.withOpacity(0.25),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.badge_outlined,
+          size: 96,
+          color: theme.colorScheme.onPrimary.withOpacity(0.9),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner(ThemeData theme) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 400),
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: 0.95 + (0.05 * value),
+          child: Opacity(opacity: value, child: child),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.errorContainer,
+          borderRadius:
+              BorderRadius.circular(DesignTokens.borderRadiusExtraLarge),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.error.withOpacity(0.15),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              color: theme.colorScheme.error,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _error!,
+                style: TextStyle(
+                  color: theme.colorScheme.error,
+                  fontWeight: DesignTokens.fontWeightMedium,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepperIndicator(ThemeData theme) {
+    final steps = ['Identity', 'Communication', 'Company'];
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(steps.length, (index) {
+        final isActive = index == _currentPage;
+        final isCompleted = index < _currentPage;
+        return Expanded(
+          child: AnimatedContainer(
+            duration: DesignTokens.animationDurationMedium,
+            curve: Curves.easeOut,
+            margin: EdgeInsets.only(
+              left: index == 0 ? 0 : 6,
+              right: index == steps.length - 1 ? 0 : 6,
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius:
+                  BorderRadius.circular(DesignTokens.borderRadiusLarge),
+              gradient: isActive
+                  ? LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.secondary,
+                      ],
+                    )
+                  : LinearGradient(
+                      colors: [
+                        theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                        theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                      ],
+                    ),
+              boxShadow: isActive
+                  ? DesignTokens.cardShadow
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+            ),
+            child: Column(
+              children: [
+                Text(
+                  steps[index],
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: isActive
+                        ? DesignTokens.fontWeightBold
+                        : DesignTokens.fontWeightMedium,
+                    color: isActive
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.onSurface.withOpacity(0.65),
+                  ),
+                ),
+                if (isCompleted)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildPagedContent(BuildContext context) {
+    final theme = Theme.of(context);
+    return AnimatedSize(
+      duration: DesignTokens.animationDurationSlow,
+      curve: Curves.easeInOut,
+      child: SizedBox(
+        height: 420,
+        child: PageView(
+          controller: _pageController,
+          onPageChanged: (value) {
+            setState(() {
+              _currentPage = value;
+            });
+          },
+          children: [
+            _buildIdentityPage(theme),
+            _buildCommunicationPage(theme),
+            _buildCompanyPage(theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIdentityPage(ThemeData theme) {
+    return _GlassSection(
+      icon: Icons.badge_rounded,
+      title: 'Identity',
+      subtitle: 'Double check who you met and their role.',
+      children: [
+        _buildTextField(
+          controller: _fullNameController,
+          label: 'Full Name *',
+          icon: Icons.person_rounded,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Name is required';
+            }
+            return null;
+          },
+          suggestionKey: 'full_name',
+        ),
+        _buildTextField(
+          controller: _titleController,
+          label: 'Title',
+          icon: Icons.work_outline_rounded,
+          suggestionKey: 'title',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCommunicationPage(ThemeData theme) {
+    return _GlassSection(
+      icon: Icons.chat_bubble_rounded,
+      title: 'Communication',
+      subtitle: 'Confirm how you can get in touch.',
+      children: [
+        _buildTextField(
+          controller: _emailController,
+          label: 'Email',
+          icon: Icons.email_rounded,
+          keyboardType: TextInputType.emailAddress,
+          validator: (value) {
+            if (value != null && value.isNotEmpty) {
+              if (!AppConstants.emailRegex.hasMatch(value)) {
+                return 'Invalid email format';
+              }
+            }
+            return null;
+          },
+          confidence: _confidence['email'],
+          suggestionKey: 'email',
+        ),
+        _buildTextField(
+          controller: _phoneController,
+          label: 'Phone',
+          icon: Icons.phone_rounded,
+          keyboardType: TextInputType.phone,
+          confidence: _confidence['phone'],
+          suggestionKey: 'phone',
+        ),
+        _buildTextField(
+          controller: _websiteController,
+          label: 'Website',
+          icon: Icons.language_rounded,
+          keyboardType: TextInputType.url,
+          suggestionKey: 'website',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompanyPage(ThemeData theme) {
+    return _GlassSection(
+      icon: Icons.apartment_rounded,
+      title: 'Company',
+      subtitle: 'Complete their business information.',
+      children: [
+        _buildTextField(
+          controller: _companyController,
+          label: 'Company',
+          icon: Icons.business_center_rounded,
+          suggestionKey: 'company',
+        ),
+        _buildTextField(
+          controller: _addressController,
+          label: 'Address',
+          icon: Icons.location_on_rounded,
+          maxLines: 2,
+          suggestionKey: 'address',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNavigationControls(ThemeData theme) {
+    final isFirst = _currentPage == 0;
+    final isLast = _currentPage == 2;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        AnimatedSwitcher(
+          duration: DesignTokens.animationDurationMedium,
+          child: isFirst
+              ? const SizedBox(width: 100)
+              : TextButton.icon(
+                  key: const ValueKey('prev'),
+                  onPressed: () {
+                    _pageController.previousPage(
+                      duration: DesignTokens.animationDurationMedium,
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  label: const Text('Back'),
+                ),
+        ),
+        AnimatedSwitcher(
+          duration: DesignTokens.animationDurationMedium,
+          child: isLast
+              ? const SizedBox(width: 100)
+              : FilledButton.icon(
+                  key: const ValueKey('next'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: DesignTokens.spacingExtraLarge,
+                      vertical: DesignTokens.spacingMedium,
+                    ),
+                  ),
+                  onPressed: () {
+                    _pageController.nextPage(
+                      duration: DesignTokens.animationDurationMedium,
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text('Next'),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSaveButton(ThemeData theme) {
+    final progress = CurvedAnimation(
+      parent: _saveSuccessController,
+      curve: Curves.easeInOut,
+    );
+
+    return Hero(
+      tag: 'primary-action-cta',
+      child: AnimatedBuilder(
+        animation: progress,
+        builder: (context, child) {
+          final scale = _saveScaleAnimation.value;
+          final backgroundColor = Color.lerp(
+                theme.colorScheme.primary,
+                theme.colorScheme.secondary,
+                progress.value,
+              ) ??
+              theme.colorScheme.primary;
+          final isCelebrating = !_isSaving && progress.value > 0.05;
+          return Transform.scale(
+            scale: scale,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: backgroundColor,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    DesignTokens.borderRadiusExtraLarge,
+                  ),
+                ),
+              ),
+              onPressed: _isSaving ? null : _saveContact,
+              child: AnimatedSwitcher(
+                duration: DesignTokens.animationDurationMedium,
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(scale: animation, child: child),
+                ),
+                child: _isSaving
+                    ? const SizedBox(
+                        key: ValueKey('saving'),
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Row(
+                        key: ValueKey(isCelebrating ? 'saved' : 'save'),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            isCelebrating
+                                ? Icons.check_rounded
+                                : Icons.check_circle_rounded,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            isCelebrating ? 'Saved!' : 'Save Contact',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: DesignTokens.fontWeightSemiBold,
+                              color: theme.colorScheme.onPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -357,73 +712,163 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     int maxLines = 1,
     double? confidence,
     String? Function(String?)? validator,
-    required int index,
+    required String suggestionKey,
   }) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 400 + (index * 50)),
-      curve: Curves.easeOut,
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, 20 * (1 - value)),
-          child: Opacity(
-            opacity: value,
-            child: child,
-          ),
-        );
-      },
+    final theme = Theme.of(context);
+    final suggestion = _suggestions[suggestionKey] ?? '';
+    final normalizedSuggestion = suggestion.trim();
+    final hasSuggestion = normalizedSuggestion.isNotEmpty;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: DesignTokens.animationDurationSlow,
+        curve: Curves.easeOut,
+        builder: (context, value, child) {
+          return Transform.translate(
+            offset: Offset(0, 24 * (1 - value)),
+            child: Opacity(opacity: value, child: child),
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: DesignTokens.fontWeightSemiBold,
+                    color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  ),
+                ),
+                if (confidence != null) ...[
+                  const SizedBox(width: 8),
+                  ConfidenceChip(confidence: confidence),
+                ],
+              ],
+            ),
+            const SizedBox(height: 12),
+            GlassContainer(
+              borderRadius:
+                  BorderRadius.circular(DesignTokens.borderRadiusLarge),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: TextFormField(
+                controller: controller,
+                keyboardType: keyboardType,
+                maxLines: maxLines,
+                style: const TextStyle(fontSize: 16),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  prefixIcon: Icon(icon, size: 22),
+                  hintText: 'Enter $label',
+                ),
+                validator: validator,
+              ),
+            ),
+            const SizedBox(height: 8),
+            AnimatedSwitcher(
+              duration: DesignTokens.animationDurationMedium,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SizeTransition(
+                  sizeFactor: animation,
+                  axisAlignment: -1,
+                  child: child,
+                ),
+              ),
+              child: hasSuggestion && controller.text.trim() != normalizedSuggestion
+                  ? Align(
+                      alignment: Alignment.centerLeft,
+                      child: ActionChip(
+                        key: ValueKey('chip-$suggestionKey'),
+                        avatar: const Icon(Icons.auto_fix_high_rounded, size: 18),
+                        label: const Text('Accept OCR suggestion'),
+                        onPressed: () {
+                          setState(() {
+                            controller.text = normalizedSuggestion;
+                            controller.selection = TextSelection.collapsed(
+                              offset: controller.text.length,
+                            );
+                          });
+                        },
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassSection extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final List<Widget> children;
+
+  const _GlassSection({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GlassContainer(
+      padding: const EdgeInsets.all(20),
+      borderRadius: BorderRadius.circular(DesignTokens.borderRadiusExtraLarge),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.8),
-                    ),
-              ),
-              if (confidence != null) ...[
-                const SizedBox(width: 8),
-                ConfidenceChip(confidence: confidence),
-              ],
-            ],
-          ),
-          const SizedBox(height: 10),
           Container(
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+              borderRadius:
+                  BorderRadius.circular(DesignTokens.borderRadiusLarge),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  theme.colorScheme.primary.withOpacity(0.8),
+                  theme.colorScheme.secondary.withOpacity(0.7),
+                ],
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: theme.colorScheme.onPrimary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onPrimary,
+                          fontWeight: DesignTokens.fontWeightSemiBold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-            child: TextFormField(
-              controller: controller,
-              keyboardType: keyboardType,
-              maxLines: maxLines,
-              style: const TextStyle(fontSize: 16),
-              decoration: InputDecoration(
-                prefixIcon: Padding(
-                  padding: const EdgeInsets.only(left: 20, right: 12),
-                  child: Icon(icon, size: 22),
-                ),
-                hintText: 'Enter $label',
-                hintStyle: TextStyle(
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-                ),
-              ),
-              validator: validator,
-            ),
           ),
+          const SizedBox(height: 20),
+          ...children,
         ],
       ),
     );
