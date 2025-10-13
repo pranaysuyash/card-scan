@@ -1,0 +1,82 @@
+name: card_scan
+description: A local-first business card reader with on-device OCR
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+
+  # Routing
+  go_router: ^14.6.2
+
+  # Local Database
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  path_provider: ^2.1.5
+
+  # Camera & Gallery
+  camera: ^0.11.0+2
+  image_picker: ^1.1.2
+
+  # OCR
+  google_mlkit_text_recognition: ^0.15.0
+
+  # Image Processing
+  image: ^4.3.0
+
+  # Security
+  flutter_secure_storage: ^9.2.2
+  encrypt: ^5.0.3
+
+  # Phone & Email
+  url_launcher: ^6.3.1
+
+  # Audio
+  record: ^5.1.2
+  audioplayers: ^6.1.0
+
+  # Notifications
+  flutter_local_notifications: ^18.0.1
+
+  # Export
+  share_plus: ^10.1.2
+  csv: ^6.0.0
+  file_picker: ^8.1.6
+
+  # HTTP (for optional cloud)
+  http: ^1.2.2
+
+  # UI Utilities
+  permission_handler: ^11.3.1
+  intl: ^0.19.0
+  uuid: ^4.5.1
+
+  # Device Contacts
+  contacts_service: ^0.6.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  isar_generator: ^3.1.0+1
+  build_runner: ^2.4.13
+  flutter_lints: ^5.0.0
+  mockito: ^5.4.4
+  build_resolvers: ^2.4.2
+
+dependency_overrides:
+  record: ^6.1.2
+  record_darwin: ^1.2.2
+  record_linux: ^1.2.1
+  record_windows: ^1.0.7
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icons/
