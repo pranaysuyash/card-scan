@@ -66,8 +66,7 @@ class _ContactTileState extends State<ContactTile>
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
           child: ClipRRect(
-            borderRadius:
-                BorderRadius.circular(DesignTokens.borderRadiusExtraLarge),
+            borderRadius: DesignTokens.radiusExtraLarge,
             child: BackdropFilter(
               filter: ImageFilter.blur(
                   sigmaX: DesignTokens.blurSigma,
@@ -80,8 +79,7 @@ class _ContactTileState extends State<ContactTile>
                   child: InkWell(
                     onTap: widget.onTap,
                     onLongPress: widget.onLongPress,
-                    borderRadius: BorderRadius.circular(
-                        DesignTokens.borderRadiusExtraLarge),
+                    borderRadius: DesignTokens.radiusExtraLarge,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 16),
@@ -102,9 +100,11 @@ class _ContactTileState extends State<ContactTile>
                                     width: 56,
                                     height: 56,
                                     decoration: BoxDecoration(
-                                      gradient: DesignTokens.avatarGradient,
+                                      gradient:
+                                          DesignTokens.avatarGradient(context),
                                       shape: BoxShape.circle,
-                                      boxShadow: DesignTokens.avatarShadow,
+                                      boxShadow:
+                                          DesignTokens.avatarShadow(context),
                                     ),
                                     child: Center(
                                       child: Text(

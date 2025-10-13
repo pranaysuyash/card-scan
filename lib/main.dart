@@ -17,8 +17,8 @@ class MyApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'CardScan',
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
       themeMode: themeMode,
       routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
