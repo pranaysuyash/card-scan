@@ -18,6 +18,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late AnimationController _fabAnimationController;
   late Animation<double> _fabScaleAnimation;
   late AnimationController _pulseAnimationController;
+  int? _emphasizedContactId;
 
   @override
   void initState() {
@@ -34,6 +35,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.delayed(const Duration(milliseconds: 450));
+      if (!mounted) {
+        return;
+      }
+      if (ref.read(searchQueryProvider).isNotEmpty) {
+        return;
+      }
+      try {
+        final contacts = await ref.read(searchResultsProvider.future);
+        if (!mounted || contacts.isEmpty) {
+          return;
+        }
+        var highlight = contacts.first;
+        for (final contact in contacts) {
+          if (contact.isFavorite) {
+            highlight = contact;
+            break;
+          }
+        }
+        setState(() {
+          _emphasizedContactId = highlight.id;
+        });
+        await Future.delayed(const Duration(milliseconds: 1600));
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _emphasizedContactId = null;
+        });
+      } catch (_) {
+        // Silently ignore; initial emphasis is a best-effort enhancement.
+      }
+    });
   }
 
   @override
@@ -318,6 +354,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             contact: contacts[index],
                             onTap: () =>
                                 context.push('/contact/${contacts[index].id}'),
+                            emphasize:
+                                _emphasizedContactId == contacts[index].id,
                           ),
                         );
                       },
