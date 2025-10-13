@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -166,6 +168,37 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            if (widget.imagePath != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Hero(
+                  tag: 'scan-preview',
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.12),
+                          blurRadius: 28,
+                          offset: const Offset(0, 16),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Image.file(
+                        File(widget.imagePath!),
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        height: 180,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             if (_error != null)
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.0, end: 1.0),
