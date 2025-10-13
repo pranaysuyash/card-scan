@@ -217,7 +217,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(gradient: DesignTokens.backgroundGradient),
+      decoration:
+          BoxDecoration(gradient: DesignTokens.backgroundGradient(context)),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
@@ -367,7 +368,7 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(DesignTokens.borderRadiusExtraLarge),
+      borderRadius: DesignTokens.radiusExtraLarge,
       child: BackdropFilter(
         filter: ImageFilter.blur(
             sigmaX: DesignTokens.blurSigma, sigmaY: DesignTokens.blurSigma),
@@ -377,8 +378,7 @@ class _SettingsTile extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               onTap: isLoading ? null : onTap,
-              borderRadius:
-                  BorderRadius.circular(DesignTokens.borderRadiusExtraLarge),
+              borderRadius: DesignTokens.radiusExtraLarge,
               child: Padding(
                 padding: DesignTokens.paddingExtraLarge,
                 child: Row(
@@ -386,19 +386,8 @@ class _SettingsTile extends StatelessWidget {
                     Container(
                       padding: DesignTokens.paddingMedium,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Theme.of(context).colorScheme.primaryContainer,
-                            Theme.of(context)
-                                .colorScheme
-                                .primaryContainer
-                                .withOpacity(0.7),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(
-                            DesignTokens.borderRadiusMedium),
+                        gradient: DesignTokens.accentGradient(context),
+                        borderRadius: DesignTokens.radiusMedium,
                       ),
                       child: Icon(
                         icon,
