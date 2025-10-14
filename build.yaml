@@ -1,0 +1,7 @@
+targets:
+  $default:
+    builders:
+      isar_generator:
+        options:
+          # Try to force smaller IDs for web compatibility
+          web_compatible: true

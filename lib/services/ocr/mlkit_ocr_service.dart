@@ -43,6 +43,7 @@ class MlKitOcrService implements OcrService {
     );
   }
 
+  @override
   void dispose() {
     _recognizer.close();
   }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'ui/screens/home_screen.dart';
-import 'ui/screens/scan_screen.dart';
-import 'ui/screens/review_screen.dart';
+import 'ui/screens/quantum_home_screen.dart';
+import 'ui/screens/quantum_scan_screen.dart';
+import 'ui/screens/quantum_review_screen.dart';
 import 'ui/screens/contact_detail_screen.dart';
 import 'ui/screens/settings_screen.dart';
 
@@ -12,7 +12,7 @@ final appRouter = GoRouter(
       path: '/',
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
-        child: const HomeScreen(),
+        child: const QuantumHomeScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -22,7 +22,7 @@ final appRouter = GoRouter(
       path: '/scan',
       pageBuilder: (context, state) => CustomTransitionPage(
         key: state.pageKey,
-        child: const ScanScreen(),
+        child: const QuantumScanScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           const begin = Offset(0.0, 1.0);
           const end = Offset.zero;
@@ -40,7 +40,7 @@ final appRouter = GoRouter(
         final extra = state.extra as Map<String, dynamic>?;
         return CustomTransitionPage(
           key: state.pageKey,
-          child: ReviewScreen(
+          child: QuantumReviewScreen(
             imagePath: extra?['imagePath'] as String?,
             ocrLines: (extra?['lines'] as List?)?.cast<String>() ?? [],
             parsedData: extra?['parsed'] as Map<String, dynamic>?,

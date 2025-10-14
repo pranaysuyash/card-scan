@@ -1,40 +1,69 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'app_theme.dart';
-import 'router_showcase.dart';
-import 'providers/settings_provider.dart';
-import 'services/monetization/ad_service.dart';
+import 'package:isar/isar.dart';
+import 'package:path_provider/path_provider.dart';
+import 'ui/quantum_theme.dart';
+import 'router.dart';
+import 'models/contact.dart';
+import 'providers/contact_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Mobile Ads SDK only on mobile platforms
-  if (!kIsWeb) {
-    await MobileAds.instance.initialize();
+  print('Starting app initialization...');
 
-    // Initialize our ad service
-    await AdService().initialize();
-  }
+  // Initialize Isar database
+  final dir = await getApplicationDocumentsDirectory();
+  print('Documents directory: ${dir.path}');
 
-  runApp(const ProviderScope(child: MyApp()));
+  final isar = await Isar.open(
+    [ContactSchema],
+    directory: dir.path,
+  );
+
+  print('Isar initialized successfully');
+
+  // Set system UI overlay style for immersive experience
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: QuantumTheme.deepSpace,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
+
+  // Set preferred orientations
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  print('Launching app...');
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        isarProvider.overrideWithValue(isar),
+      ],
+      child: const QuantumCardScannerApp(),
+    ),
+  );
+
+  print('App launched successfully');
 }
 
-class MyApp extends ConsumerWidget {
-  const MyApp({super.key});
+class QuantumCardScannerApp extends StatelessWidget {
+  const QuantumCardScannerApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-
+  Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'CardScan',
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: themeMode,
-      routerConfig: showcaseRouter,
+      title: 'Quantum Card Scanner',
       debugShowCheckedModeBanner: false,
+      theme: QuantumTheme.darkTheme,
+      routerConfig: appRouter,
     );
   }
 }

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/contact_provider.dart';
 import '../../services/vcard_service.dart';
+import '../../services/audio_service.dart';
+import '../../services/haptic_service.dart';
 import '../theme_constants.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -275,6 +277,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _buildAnimatedSettingsTile(
               context,
               index: 2,
+              child: _SettingsTile(
+                icon: Icons.volume_up_rounded,
+                title: 'Sound Effects',
+                subtitle: SoundManager().isMuted() ? 'Disabled' : 'Enabled',
+                onTap: () {
+                  final bool currentMuted = SoundManager().isMuted();
+                  SoundManager().setMuted(!currentMuted);
+                  setState(() {});
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildAnimatedSettingsTile(
+              context,
+              index: 3,
+              child: _SettingsTile(
+                icon: Icons.vibration_rounded,
+                title: 'Haptic Feedback',
+                subtitle: HapticService().isHapticEnabled() ? 'Enabled' : 'Disabled',
+                onTap: () {
+                  final bool currentEnabled = HapticService().isHapticEnabled();
+                  HapticService().setHapticEnabled(!currentEnabled);
+                  setState(() {});
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildAnimatedSettingsTile(
+              context,
+              index: 4,
               child: _SettingsTile(
                 icon: Icons.palette_rounded,
                 title: 'Theme',

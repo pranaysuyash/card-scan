@@ -15,7 +15,7 @@ extension GetContactCollection on Isar {
 
 const ContactSchema = CollectionSchema(
   name: r'Contact',
-  id: 1,
+  id: 1001,
   properties: {
     r'activity': PropertySchema(
       id: 0,
@@ -229,7 +229,7 @@ const ContactSchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'fullName': IndexSchema(
-      id: 2,
+      id: 2001,
       name: r'fullName',
       unique: false,
       replace: false,
@@ -242,7 +242,7 @@ const ContactSchema = CollectionSchema(
       ],
     ),
     r'company': IndexSchema(
-      id: 3,
+      id: 2002,
       name: r'company',
       unique: false,
       replace: false,
@@ -255,7 +255,7 @@ const ContactSchema = CollectionSchema(
       ],
     ),
     r'tags': IndexSchema(
-      id: 4,
+      id: 2003,
       name: r'tags',
       unique: false,
       replace: false,
@@ -7498,7 +7498,7 @@ extension ContactQueryProperty
 
 const EmailItemSchema = Schema(
   name: r'EmailItem',
-  id: 5,
+  id: 3001,
   properties: {
     r'confidence': PropertySchema(
       id: 0,
@@ -7909,7 +7909,7 @@ extension EmailItemQueryObject
 
 const PhoneItemSchema = Schema(
   name: r'PhoneItem',
-  id: 6,
+  id: 3002,
   properties: {
     r'confidence': PropertySchema(
       id: 0,
@@ -8481,7 +8481,7 @@ extension PhoneItemQueryObject
 
 const NoteItemSchema = Schema(
   name: r'NoteItem',
-  id: 7,
+  id: 3003,
   properties: {
     r'audioPath': PropertySchema(
       id: 0,
@@ -9088,7 +9088,7 @@ extension NoteItemQueryObject
 
 const ActivitySchema = Schema(
   name: r'Activity',
-  id: 8,
+  id: 3004,
   properties: {
     r'timestamp': PropertySchema(
       id: 0,
