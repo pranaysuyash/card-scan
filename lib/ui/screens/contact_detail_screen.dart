@@ -6,6 +6,7 @@ import '../../providers/contact_provider.dart';
 import '../../models/contact.dart';
 import '../../services/vcard_service.dart';
 import 'package:intl/intl.dart';
+import '../theme_constants.dart';
 
 class ContactDetailScreen extends ConsumerWidget {
   final int contactId;
@@ -92,115 +93,144 @@ class _ContactDetailView extends ConsumerWidget {
                   ),
                 );
               },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(32),
-                margin: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primaryContainer,
-                      Theme.of(context)
-                          .colorScheme
-                          .primaryContainer
-                          .withOpacity(0.7),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Hero(
-                      tag: 'contact-avatar-${contact.id}',
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Theme.of(context).colorScheme.primary,
-                              Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withOpacity(0.8),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withOpacity(0.3),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
+              child: Hero(
+                tag: 'contact-card-${contact.id}',
+                child: Material(
+                  color: Colors.transparent,
+                  child: Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(
+                        DesignTokens.borderRadiusExtraLarge + 8,
+                      ),
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context)
+                              .colorScheme
+                              .primaryContainer
+                              .withOpacity(0.95),
+                          Theme.of(context)
+                              .colorScheme
+                              .surface
+                              .withOpacity(0.75),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.18),
+                        width: 1.4,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.15),
+                          blurRadius: 28,
+                          offset: const Offset(0, 12),
                         ),
-                        child: Center(
-                          child: Text(
-                            contact.fullName.isNotEmpty
-                                ? contact.fullName[0].toUpperCase()
-                                : '?',
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 36,
+                      ),
+                      child: Column(
+                        children: [
+                          Hero(
+                            tag: 'contact-avatar-${contact.id}',
+                            child: Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Theme.of(context).colorScheme.primary,
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.8),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.3),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Text(
+                                  contact.fullName.isNotEmpty
+                                      ? contact.fullName[0].toUpperCase()
+                                      : '?',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .displayMedium
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            contact.fullName,
                             style: Theme.of(context)
                                 .textTheme
-                                .displayMedium
+                                .headlineSmall
                                 ?.copyWith(
-                                  color:
-                                      Theme.of(context).colorScheme.onPrimary,
                                   fontWeight: FontWeight.bold,
                                 ),
+                            textAlign: TextAlign.center,
                           ),
-                        ),
+                          if (contact.title != null) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              contact.title!,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                          if (contact.company != null) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              contact.company!,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer
+                                        .withOpacity(0.7),
+                                  ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      contact.fullName,
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                      textAlign: TextAlign.center,
-                    ),
-                    if (contact.title != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        contact.title!,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                    if (contact.company != null) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        contact.company!,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onPrimaryContainer
-                                  .withOpacity(0.7),
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
               ),
             ),

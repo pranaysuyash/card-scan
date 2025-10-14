@@ -25,6 +25,39 @@ class Contact {
   String? website;
   String? address;
   
+  // Social Media & Digital Presence (HiHello, Popl inspired)
+  String? linkedIn;
+  String? facebook;
+  String? twitter;
+  String? instagram;
+  String? youtube;
+  String? github;
+  String? whatsapp;
+  
+  // Professional Info (Covve, CamCard inspired)
+  String? department;
+  String? jobFunction;
+  String? industry;
+  List<String> skills = [];
+  
+  // Digital Card Features (HiHello, Haystack inspired)
+  String? profileImageUrl;
+  String? companyLogo;
+  String? qrCode;
+  String? digitalCardUrl;
+  
+  // CRM & Relationship (Covve, Popl inspired)
+  DateTime? lastContacted;
+  String? leadSource;
+  String? leadStatus;
+  int contactScore = 0;
+  List<String> interests = [];
+  
+  // Export & Integration
+  bool syncedToContacts = false;
+  String? crmId;
+  DateTime? lastSynced;
+  
   @Index()
   List<String> tags = [];
   

@@ -1,29 +1,23 @@
-import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/contact_provider.dart';
-import '../../models/contact.dart';
-import '../widgets/contact_tile.dart';
+import '../../ui/widgets/contact_tile.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+class HomeScreenVariantC extends ConsumerStatefulWidget {
+  const HomeScreenVariantC({super.key});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreenVariantC> createState() => _HomeScreenVariantCState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen>
+class _HomeScreenVariantCState extends ConsumerState<HomeScreenVariantC>
     with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _fabAnimationController;
   late Animation<double> _fabScaleAnimation;
   late AnimationController _pulseAnimationController;
-  int? _emphasizedContactId;
-  bool _emphasisScheduled = false;
-  Timer? _emphasisTimer;
-  Timer? _emphasisClearTimer;
 
   @override
   void initState() {
@@ -44,33 +38,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   void dispose() {
-    _emphasisTimer?.cancel();
-    _emphasisClearTimer?.cancel();
     _searchController.dispose();
     _fabAnimationController.dispose();
     _pulseAnimationController.dispose();
     super.dispose();
-  }
-
-  void _scheduleInitialEmphasis(List<Contact> contacts, String searchQuery) {
-    if (_emphasisScheduled || contacts.isEmpty || searchQuery.isNotEmpty) {
-      return;
-    }
-
-    final targetContact = contacts.firstWhere(
-      (c) => c.isFavorite,
-      orElse: () => contacts.first,
-    );
-
-    _emphasisScheduled = true;
-    _emphasisTimer = Timer(const Duration(milliseconds: 420), () {
-      if (!mounted) return;
-      setState(() => _emphasizedContactId = targetContact.id);
-      _emphasisClearTimer = Timer(const Duration(milliseconds: 1700), () {
-        if (!mounted) return;
-        setState(() => _emphasizedContactId = null);
-      });
-    });
   }
 
   @override
@@ -224,7 +195,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             Expanded(
               child: contactsAsync.when(
                 data: (contacts) {
-                  _scheduleInitialEmphasis(contacts, searchQuery);
                   if (contacts.isEmpty) {
                     return TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0.0, end: 1.0),
@@ -348,8 +318,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             contact: contacts[index],
                             onTap: () =>
                                 context.push('/contact/${contacts[index].id}'),
-                            emphasize:
-                                _emphasizedContactId == contacts[index].id,
                           ),
                         );
                       },
@@ -396,22 +364,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ),
               ],
             ),
-            child: FloatingActionButton.extended(
-              onPressed: () {
-                _fabAnimationController.forward().then((_) {
-                  _fabAnimationController.reverse();
-                });
-                context.push('/scan');
-              },
-              icon: const Icon(Icons.camera_alt_rounded, size: 24),
-              label: const Text('Scan New Card',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 0.5)),
-              elevation: 0,
-              extendedPadding:
-                  const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+            child: Hero(
+              tag: 'primary-action-cta',
+              child: FloatingActionButton.extended(
+                onPressed: () {
+                  _fabAnimationController.forward().then((_) {
+                    _fabAnimationController.reverse();
+                  });
+                  context.push('/scan');
+                },
+                icon: const Icon(Icons.camera_alt_rounded, size: 24),
+                label: const Text('Scan New Card',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        letterSpacing: 0.5)),
+                elevation: 0,
+                extendedPadding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              ),
             ),
           );
         },
