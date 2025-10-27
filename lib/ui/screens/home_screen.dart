@@ -396,22 +396,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ),
               ],
             ),
-            child: FloatingActionButton.extended(
-              onPressed: () {
-                _fabAnimationController.forward().then((_) {
-                  _fabAnimationController.reverse();
-                });
-                context.push('/scan');
-              },
-              icon: const Icon(Icons.camera_alt_rounded, size: 24),
-              label: const Text('Scan New Card',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 0.5)),
-              elevation: 0,
-              extendedPadding:
-                  const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+            child: Hero(
+              tag: 'primary-action-cta',
+              child: FloatingActionButton.extended(
+                onPressed: () {
+                  _fabAnimationController.forward().then((_) {
+                    _fabAnimationController.reverse();
+                  });
+                  context.push('/scan');
+                },
+                icon: const Icon(Icons.camera_alt_rounded, size: 24),
+                label: const Text('Scan New Card',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        letterSpacing: 0.5)),
+                elevation: 0,
+                extendedPadding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              ),
             ),
           );
         },
