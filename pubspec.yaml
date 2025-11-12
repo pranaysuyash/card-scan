@@ -1,5 +1,5 @@
 name: card_scan
-description: A local-first business card reader with on-device OCR
+description: Professional Business Card Scanner - Enterprise Grade Contact Management
 publish_to: "none"
 version: 1.0.0+1
 
@@ -31,32 +31,62 @@ dependencies:
   # Image Processing
   image: ^4.3.0
 
-  # Security
+  # Security & Encryption
   flutter_secure_storage: ^9.2.2
   encrypt: ^5.0.3
 
   # Phone & Email
   url_launcher: ^6.3.1
 
-  # Audio
+  # Audio & Voice
   record: ^5.1.2
   audioplayers: ^6.1.0
+  speech_to_text: ^7.0.0
 
   # Notifications
   flutter_local_notifications: ^18.0.1
 
-  # Export
+  # Export & Sharing
   share_plus: ^10.1.2
   csv: ^6.0.0
   file_picker: ^8.1.6
 
-  # HTTP (for optional cloud)
+  # HTTP & Networking
   http: ^1.2.2
+  dio: ^5.7.0
+
+  # Firebase Backend
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_storage: ^12.3.4
+  firebase_analytics: ^11.3.3
+  firebase_crashlytics: ^4.1.3
+  firebase_messaging: ^15.1.3
+
+  # QR Code
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^5.2.3
+
+  # In-App Purchases
+  in_app_purchase: ^3.2.0
+  purchases_flutter: ^8.2.1
+
+  # Analytics
+  mixpanel_flutter: ^2.3.1
+
+  # Error Tracking
+  sentry_flutter: ^8.9.0
 
   # UI Utilities
   permission_handler: ^11.3.1
   intl: ^0.19.0
   uuid: ^4.5.1
+  flutter_slidable: ^3.1.1
+  shimmer: ^3.0.0
+  cached_network_image: ^3.4.1
+  flutter_svg: ^2.0.10+1
+  lottie: ^3.1.2
 
   # Device Contacts
   contacts_service: ^0.6.3
@@ -67,6 +97,27 @@ dependencies:
   # Sensors
   sensors_plus: ^6.0.0
 
+  # String Similarity (for deduplication)
+  string_similarity: ^2.0.0
+
+  # Functional Programming
+  dartz: ^0.10.1
+
+  # Shared Preferences
+  shared_preferences: ^2.3.2
+
+  # Device Info
+  device_info_plus: ^10.1.2
+
+  # Connectivity
+  connectivity_plus: ^6.0.5
+
+  # NFC
+  flutter_nfc_kit: ^3.5.0
+
+  # Biometric Auth
+  local_auth: ^2.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -75,6 +126,10 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   mockito: ^5.4.0
   build_resolvers: ^2.0.0
+  integration_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.1
 
 dependency_overrides:
   record: ^6.1.2
@@ -87,3 +142,19 @@ flutter:
   assets:
     - assets/icons/
     - assets/sounds/
+    - assets/images/
+    - assets/animations/
+    - assets/illustrations/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  adaptive_icon_background: "#0A0E27"
+  adaptive_icon_foreground: "assets/icons/app_icon_foreground.png"
+
+flutter_native_splash:
+  color: "#0A0E27"
+  image: assets/icons/splash_icon.png
+  android: true
+  ios: true
