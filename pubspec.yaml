@@ -34,6 +34,7 @@ dependencies:
   # Security
   flutter_secure_storage: ^9.2.2
   encrypt: ^5.0.3
+  local_auth: ^2.3.0
 
   # Phone & Email
   url_launcher: ^6.3.1

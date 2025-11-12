@@ -7,51 +7,99 @@ import 'ui/quantum_theme.dart';
 import 'router.dart';
 import 'models/contact.dart';
 import 'providers/contact_provider.dart';
+import 'services/error_handler.dart';
+import 'services/logger_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  print('Starting app initialization...');
+  // Initialize error handling and logging
+  final errorHandler = ErrorHandler();
+  final logger = LoggerService();
+  errorHandler.initialize();
 
-  // Initialize Isar database
-  final dir = await getApplicationDocumentsDirectory();
-  print('Documents directory: ${dir.path}');
+  logger.info('Starting app initialization...');
 
-  final isar = await Isar.open(
-    [ContactSchema],
-    directory: dir.path,
-  );
+  try {
+    // Initialize Isar database
+    final dir = await getApplicationDocumentsDirectory();
+    logger.info('Documents directory: ${dir.path}');
 
-  print('Isar initialized successfully');
+    final isar = await Isar.open(
+      [ContactSchema],
+      directory: dir.path,
+    );
 
-  // Set system UI overlay style for immersive experience
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: QuantumTheme.deepSpace,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
+    logger.info('Isar initialized successfully');
 
-  // Set preferred orientations
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+    // Set system UI overlay style for immersive experience
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: QuantumTheme.deepSpace,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+    );
 
-  print('Launching app...');
+    // Set preferred orientations
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
 
-  runApp(
-    ProviderScope(
-      overrides: [
-        isarProvider.overrideWithValue(isar),
-      ],
-      child: const QuantumCardScannerApp(),
-    ),
-  );
+    logger.info('Launching app...');
 
-  print('App launched successfully');
+    runApp(
+      ProviderScope(
+        overrides: [
+          isarProvider.overrideWithValue(isar),
+        ],
+        child: const QuantumCardScannerApp(),
+      ),
+    );
+
+    logger.info('App launched successfully');
+  } catch (error, stackTrace) {
+    logger.fatal('Failed to initialize app', error: error, stackTrace: stackTrace);
+    errorHandler.handleError(
+      message: 'App initialization failed',
+      error: error,
+      stackTrace: stackTrace,
+      severity: ErrorSeverity.fatal,
+    );
+
+    // Show a fallback error screen
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Failed to start app',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    error.toString(),
+                    style: const TextStyle(fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class QuantumCardScannerApp extends StatelessWidget {

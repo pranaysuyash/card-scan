@@ -1,0 +1,26 @@
+# Android Release Signing Configuration
+# Copy this file to key.properties (which is gitignored) and fill in your values
+
+# Path to your release keystore file
+# Example: /Users/yourname/keystores/release-keystore.jks
+storeFile=<PATH_TO_YOUR_KEYSTORE>
+
+# Keystore password
+storePassword=<YOUR_KEYSTORE_PASSWORD>
+
+# Key alias
+keyAlias=release
+
+# Key password
+keyPassword=<YOUR_KEY_PASSWORD>
+
+# To create a new keystore, run:
+# keytool -genkey -v -keystore ~/release-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias release
+#
+# You will be prompted for:
+# - Keystore password (use a strong password)
+# - Key password (use a strong password)
+# - Your name and organization details
+#
+# IMPORTANT: Keep this keystore file safe and backed up!
+# If you lose it, you won't be able to update your app on Google Play Store
