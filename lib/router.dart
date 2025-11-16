@@ -10,6 +10,15 @@ import 'ui/screens/batch_scan_screen.dart';
 import 'ui/screens/qr_code_share_screen.dart';
 import 'ui/screens/subscription_screen.dart';
 import 'ui/screens/advanced_search_screen.dart';
+import 'ui/screens/duplicate_merge_screen.dart';
+import 'ui/screens/voice_note_screen.dart';
+import 'ui/screens/business_card_designer_screen.dart';
+import 'ui/screens/enhanced_settings_screen.dart';
+import 'ui/screens/profile_screen.dart';
+import 'ui/screens/tags_management_screen.dart';
+import 'ui/screens/help_center_screen.dart';
+import 'ui/screens/analytics_dashboard_screen.dart';
+import 'ui/screens/enhanced_contact_detail_screen.dart';
 import 'models/contact.dart';
 
 final appRouter = GoRouter(
@@ -187,6 +196,147 @@ final appRouter = GoRouter(
           return SlideTransition(position: offsetAnimation, child: child);
         },
       ),
+    ),
+    GoRoute(
+      path: '/duplicate-merge',
+      pageBuilder: (context, state) {
+        final contact = state.extra as Contact?;
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: DuplicateMergeScreen(contact: contact),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        );
+      },
+    ),
+    GoRoute(
+      path: '/voice-note',
+      pageBuilder: (context, state) {
+        final contact = state.extra as Contact;
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: VoiceNoteScreen(contact: contact),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(0.0, 1.0);
+            const end = Offset.zero;
+            const curve = Curves.easeOutCubic;
+            var tween =
+                Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            var offsetAnimation = animation.drive(tween);
+            return SlideTransition(position: offsetAnimation, child: child);
+          },
+        );
+      },
+    ),
+    GoRoute(
+      path: '/card-designer',
+      pageBuilder: (context, state) {
+        final contact = state.extra as Contact?;
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: BusinessCardDesignerScreen(contact: contact),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.9, end: 1.0).animate(animation),
+                child: child,
+              ),
+            );
+          },
+        );
+      },
+    ),
+    GoRoute(
+      path: '/enhanced-settings',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const EnhancedSettingsScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeOutCubic;
+          var tween =
+              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          var offsetAnimation = animation.drive(tween);
+          return SlideTransition(position: offsetAnimation, child: child);
+        },
+      ),
+    ),
+    GoRoute(
+      path: '/profile',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const ProfileScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeOutCubic;
+          var tween =
+              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          var offsetAnimation = animation.drive(tween);
+          return SlideTransition(position: offsetAnimation, child: child);
+        },
+      ),
+    ),
+    GoRoute(
+      path: '/tags',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const TagsManagementScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    ),
+    GoRoute(
+      path: '/help',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const HelpCenterScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeOutCubic;
+          var tween =
+              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          var offsetAnimation = animation.drive(tween);
+          return SlideTransition(position: offsetAnimation, child: child);
+        },
+      ),
+    ),
+    GoRoute(
+      path: '/analytics',
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const AnalyticsDashboardScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    ),
+    GoRoute(
+      path: '/enhanced-contact/:id',
+      pageBuilder: (context, state) {
+        final id = int.parse(state.pathParameters['id']!);
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: EnhancedContactDetailScreen(contactId: id),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(1.0, 0.0);
+            const end = Offset.zero;
+            const curve = Curves.easeOutCubic;
+            var tween =
+                Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            var offsetAnimation = animation.drive(tween);
+            return SlideTransition(
+              position: offsetAnimation,
+              child: FadeTransition(opacity: animation, child: child),
+            );
+          },
+        );
+      },
     ),
   ],
 );
